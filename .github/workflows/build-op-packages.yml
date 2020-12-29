@@ -1,0 +1,48 @@
+name: Build Packages
+
+on: 
+  release:
+    types: [published]
+    
+#  push:
+#    branches: 
+#      - master
+
+# 点赞触发
+  watch:
+    types: [started]
+
+jobs:
+  build_packages:
+    runs-on: ubuntu-latest
+    if: github.event.repository.owner.id == github.event.sender.id
+
+    steps:
+    - name: 校验本地文件
+      uses: actions/checkout@main
+
+    - name: 克隆源代码
+      run: |
+        df -hT $PWD
+        git clone --depth=1 https://github.com/maxlicheng/luci-app-ssr-plus
+        # git clone --depth=1 https://github.com/coolsnowwolf/lede.git
+
+    - name: 下载sdk
+      run: |
+        df -hT $PWD
+        wget https://downloads.openwrt.org/releases/19.07.5/targets/x86/64/openwrt-sdk-19.07.5-x86-64_gcc-7.5.0_musl.Linux-x86_64.tar.xz
+        tar -xf openwrt-sdk-19.07.5-x86-64_gcc-7.5.0_musl.Linux-x86_64.tar.xz
+        ln -sf $PWD/luci-app-ssr-plus/packages/openwrt $PWD/openwrt-sdk-19.07.5-x86-64_gcc-7.5.0_musl.Linux-x86_64/package/luci-app-ssr-plus
+        
+    - name: 编译ipk
+      run: |
+        cd openwrt-sdk-19.07.5-x86-64_gcc-7.5.0_musl.Linux-x86_64
+        make defconfig
+        make package/luci-app-ssr-plus/compile V=s -j$(nproc)
+        cp $(find . -name luci-app-ssr-plus_*.ipk) ../
+
+    - name: 上传ipk到 WeTransfer
+      run: |
+        curl -fsSL git.io/file-transfer | sh
+        ./transfer wet -s -p 16 --no-progress ./luci-app-ssr-plus*.ipk 2>&1 | tee wetransfer.log
+        echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
