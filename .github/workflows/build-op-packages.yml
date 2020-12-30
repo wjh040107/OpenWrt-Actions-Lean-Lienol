@@ -24,25 +24,24 @@ jobs:
     - name: 克隆源代码
       run: |
         df -hT $PWD
-        git clone --depth=1 https://github.com/maxlicheng/luci-app-ssr-plus
-        # git clone --depth=1 https://github.com/coolsnowwolf/lede.git
+        git clone --depth=1 https://github.com/jerrykuku/luci-app-vssr
 
     - name: 下载sdk
       run: |
         df -hT $PWD
         wget https://downloads.openwrt.org/releases/19.07.5/targets/x86/64/openwrt-sdk-19.07.5-x86-64_gcc-7.5.0_musl.Linux-x86_64.tar.xz
         tar -xf openwrt-sdk-19.07.5-x86-64_gcc-7.5.0_musl.Linux-x86_64.tar.xz
-        ln -sf $PWD/luci-app-ssr-plus/packages/openwrt $PWD/openwrt-sdk-19.07.5-x86-64_gcc-7.5.0_musl.Linux-x86_64/package/luci-app-ssr-plus
+        ln -sf $PWD/luci-app-vssr/packages/openwrt $PWD/openwrt-sdk-19.07.5-x86-64_gcc-7.5.0_musl.Linux-x86_64/package/luci-app-ssr-plus
         
     - name: 编译ipk
       run: |
         cd openwrt-sdk-19.07.5-x86-64_gcc-7.5.0_musl.Linux-x86_64
         make defconfig
-        make package/luci-app-ssr-plus/compile V=s -j$(nproc)
-        cp $(find . -name luci-app-ssr-plus_*.ipk) ../
+        make package/luci-app-vssr/compile V=s -j$(nproc)
+        cp $(find . -name luci-app-vssr_*.ipk) ../
 
     - name: 上传ipk到 WeTransfer
       run: |
         curl -fsSL git.io/file-transfer | sh
-        ./transfer wet -s -p 16 --no-progress ./luci-app-ssr-plus*.ipk 2>&1 | tee wetransfer.log
+        ./transfer wet -s -p 16 --no-progress ./luci-app-vssr_*.ipk 2>&1 | tee wetransfer.log
         echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
